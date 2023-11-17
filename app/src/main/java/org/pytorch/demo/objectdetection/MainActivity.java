@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.documentfile.provider.DocumentFile;
 
 import android.Manifest;
 import android.content.Context;
@@ -22,12 +23,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import org.pytorch.IValue;
 import org.pytorch.LiteModuleLoader;
@@ -44,14 +48,17 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class MainActivity extends AppCompatActivity implements Runnable {
     private int mImageIndex = 0;
-    private String[] mTestImages = {"med1.jpg", "test2.jpg", "test3.png"};
+    private String[] mTestImages = {"med1.jpg", "med2.jpg", "med3.jpg"};
 
     private ImageView mImageView;
     private ResultView mResultView;
+    private TextView mReadingText;
     private Button mButtonDetect;
+    private Button mButtonValidate;
     private ProgressBar mProgressBar;
     private Bitmap mBitmap = null;
     private Module mModule = null;
@@ -101,6 +108,8 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         mImageView.setImageBitmap(mBitmap);
         mResultView = findViewById(R.id.resultView);
         mResultView.setVisibility(View.INVISIBLE);
+
+        mReadingText = findViewById(R.id.resultText);
 
         final Button buttonTest = findViewById(R.id.testButton);
         buttonTest.setText(("Test Image 1/3"));
@@ -194,6 +203,16 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             Log.e("Object Detection", "Error reading assets", e);
             finish();
         }
+        mButtonValidate = findViewById(R.id.validateBtn);
+        mButtonValidate.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                startActivityForResult(i,2);
+            }
+        });
+
     }
 
     @Override
@@ -231,24 +250,48 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                         }
                     }
                     break;
+                case 2:
+                    Uri uri;
+                    if(data != null) {
+                        try {
+                            uri = data.getData();
+                            DocumentFile df = DocumentFile.fromTreeUri(this,uri);
+                            ValidationAnalyst va = new ValidationAnalyst(df);
+                        }catch(Exception e) {
+                            Logger.getGlobal().info("Error on files");
+                        }
+                    }
+                    break;
             }
         }
     }
 
     @Override
     public void run() {
+        long prepStart = System.currentTimeMillis();
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(mBitmap, PrePostProcessor.mInputWidth, PrePostProcessor.mInputHeight, true);
         final Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(resizedBitmap, PrePostProcessor.NO_MEAN_RGB, PrePostProcessor.NO_STD_RGB);
+        long prepEnd = System.currentTimeMillis();
         IValue[] outputTuple = mModule.forward(IValue.from(inputTensor)).toTuple();
+        long aiEnd = System.currentTimeMillis();
         final Tensor outputTensor = outputTuple[0].toTensor();
         final float[] outputs = outputTensor.getDataAsFloatArray();
         final ArrayList<Result> results =  PrePostProcessor.outputsToNMSPredictions(outputs, mImgScaleX, mImgScaleY, mIvScaleX, mIvScaleY, mStartX, mStartY);
+        final ResultsAnalyzer.Vector2 linear_reg = ResultsAnalyzer.computeRegressionLine(results);
+        final String reading = ResultsAnalyzer.computeReading(results);
+        long postEnd = System.currentTimeMillis();
+
+        Logger.getGlobal().info("Preprocess: "+(prepEnd-prepStart)+"ms");
+        Logger.getGlobal().info("Model: "+(aiEnd-prepEnd)+"ms");
+        Logger.getGlobal().info("Postprocess: "+(postEnd-aiEnd)+"ms");
 
         runOnUiThread(() -> {
             mButtonDetect.setEnabled(true);
             mButtonDetect.setText(getString(R.string.detect));
             mProgressBar.setVisibility(ProgressBar.INVISIBLE);
             mResultView.setResults(results);
+            mResultView.setLineReg(linear_reg);
+            mReadingText.setText("Lectura: "+reading);
             mResultView.invalidate();
             mResultView.setVisibility(View.VISIBLE);
         });

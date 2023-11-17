@@ -54,6 +54,7 @@ public class ObjectDetectionActivity extends AbstractCameraXActivity<ObjectDetec
     @Override
     protected void applyToUiAnalyzeImageResult(AnalysisResult result) {
         mResultView.setResults(result.mResults);
+        mResultView.setLineReg(ResultsAnalyzer.computeRegressionLine(result.mResults));
         mResultView.invalidate();
     }
 

@@ -27,7 +27,9 @@ public class ResultView extends View {
 
     private Paint mPaintRectangle;
     private Paint mPaintText;
+    private Paint mPaintRegLine;
     private ArrayList<Result> mResults;
+    private ResultsAnalyzer.Vector2 lineReg;
 
     public ResultView(Context context) {
         super(context);
@@ -38,6 +40,9 @@ public class ResultView extends View {
         mPaintRectangle = new Paint();
         mPaintRectangle.setColor(Color.YELLOW);
         mPaintText = new Paint();
+        mPaintRegLine = new Paint();
+        mPaintRegLine.setColor(Color.RED);
+        mPaintRegLine.setStrokeWidth(5);
     }
 
     @Override
@@ -62,9 +67,18 @@ public class ResultView extends View {
             mPaintText.setTextSize(32);
             canvas.drawText(String.format("%s %.2f", PrePostProcessor.mClasses[result.classIndex], result.score), result.rect.left + TEXT_X, result.rect.top + TEXT_Y, mPaintText);
         }
+        if(lineReg != null) {
+            float stX = 0;
+            float stY = lineReg.y; // y=m*0+b
+            float endX = canvas.getWidth();
+            float endY = lineReg.x*canvas.getWidth() + lineReg.y; // y = m*width+b
+            canvas.drawLine(stX,stY,endX,endY,mPaintRegLine);
+        }
+
     }
 
     public void setResults(ArrayList<Result> results) {
         mResults = results;
     }
+    public void setLineReg(ResultsAnalyzer.Vector2 lreg) { lineReg = lreg;}
 }
