@@ -55,7 +55,7 @@ public class ResultView extends View {
             mPaintRectangle.setStyle(Paint.Style.STROKE);
             canvas.drawRect(result.rect, mPaintRectangle);
 
-            Path mPath = new Path();
+            /*Path mPath = new Path();
             RectF mRectF = new RectF(result.rect.left, result.rect.top, result.rect.left + TEXT_WIDTH,  result.rect.top + TEXT_HEIGHT);
             mPath.addRect(mRectF, Path.Direction.CW);
             mPaintText.setColor(Color.MAGENTA);
@@ -66,6 +66,7 @@ public class ResultView extends View {
             mPaintText.setStyle(Paint.Style.FILL);
             mPaintText.setTextSize(32);
             canvas.drawText(String.format("%s %.2f", PrePostProcessor.mClasses[result.classIndex], result.score), result.rect.left + TEXT_X, result.rect.top + TEXT_Y, mPaintText);
+             */
         }
         if(lineReg != null) {
             float stX = 0;

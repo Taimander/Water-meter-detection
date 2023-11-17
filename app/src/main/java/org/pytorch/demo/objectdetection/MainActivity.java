@@ -64,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private Module mModule = null;
     private float mImgScaleX, mImgScaleY, mIvScaleX, mIvScaleY, mStartX, mStartY;
 
+    private ValidationAnalyst valAnalyst;
+
     public static String assetFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
         if (file.exists() && file.length() > 0) {
@@ -242,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                                 String picturePath = cursor.getString(columnIndex);
                                 mBitmap = BitmapFactory.decodeFile(picturePath);
                                 Matrix matrix = new Matrix();
-                                matrix.postRotate(90.0f);
+                                //matrix.postRotate(90.0f);
                                 mBitmap = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(), mBitmap.getHeight(), matrix, true);
                                 mImageView.setImageBitmap(mBitmap);
                                 cursor.close();
@@ -256,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
                         try {
                             uri = data.getData();
                             DocumentFile df = DocumentFile.fromTreeUri(this,uri);
-                            ValidationAnalyst va = new ValidationAnalyst(df);
+                            valAnalyst = new ValidationAnalyst(df);
                         }catch(Exception e) {
                             Logger.getGlobal().info("Error on files");
                         }
