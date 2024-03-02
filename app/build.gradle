@@ -4,8 +4,8 @@ android {
     compileSdkVersion 30
 
     defaultConfig {
-        applicationId "org.pytorch.demo.objectdetection"
-        minSdkVersion 30
+        applicationId "com.watermeter.app"
+        minSdkVersion 28
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -15,7 +15,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            signingConfig signingConfigs.debug
         }
     }
     compileOptions {
